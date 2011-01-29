@@ -1,0 +1,9 @@
+# compiled source
+*.pyc
+
+# backup files
+.*.sw*
+*~
+*.bak
+*.orig
+
