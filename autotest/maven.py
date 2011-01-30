@@ -7,6 +7,8 @@ import os
 import subprocess
 import time
 
+from autotest.ansi import highlight, error
+
 def gen_mvntest(fileseq, root_dir):
     """
     Tries to execute tests for every file in fileseq.
@@ -60,7 +62,7 @@ def run_command(command, root_dir):
     """
     Runs a command using subprocess
     """
-    print '\nRunning tests:', command
+    print highlight('\nRunning tests: %s' % command)
 
     start_time = time.time()
     proc = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE,
@@ -69,12 +71,13 @@ def run_command(command, root_dir):
     end_time = time.time()
 
     if 0 < proc.returncode > 1:
-        print 'Error trying to run the tests'
-        print stderr_value
+        print error('Error trying to run the tests')
+        print error(stderr_value)
         stdout_value = stderr_value
     else:
-        print '----------------------------'
-        print 'Finished tests in %f seconds\n' % (end_time - start_time)
+        print highlight('----------------------------')
+        print highlight('Finished tests in %f seconds\n' % (end_time -
+            start_time))
 
     return (proc.returncode, stdout_value)
 
