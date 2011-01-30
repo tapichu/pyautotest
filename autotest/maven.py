@@ -22,6 +22,9 @@ STATS_PATC = re.compile(STATS_PAT, re.VERBOSE)
 COMPILE_ERR_PAT = r'^\[ERROR\] COMPILATION ERROR.*$'
 COMPILE_ERR_PATC = re.compile(COMPILE_ERR_PAT, re.MULTILINE)
 
+TOTAL_COMPILE_ERR_PAT = r'^\[INFO] \d+ error'
+TOTAL_COMPILE_ERR_PATC = re.compile(TOTAL_COMPILE_ERR_PAT)
+
 # TODO: the path could have spaces in it, check this regex
 REPORT_DIR_PAT = r'^\[ERROR\] Please refer to (\S+) for.*'
 REPORT_DIR_PATC = re.compile(REPORT_DIR_PAT)
@@ -92,7 +95,7 @@ def run_command(command, root_dir):
         print error(stderr_value)
         stdout_value = stderr_value
     else:
-        print highlight('------------------------------')
+        print highlight('-------------------------------')
         print highlight('Finished tests in %.2f seconds\n' % (end_time - start_time))
 
     return (proc.returncode, stdout_value)
@@ -118,7 +121,9 @@ def report_totals(output):
 def report_errors(clazz, output):
     if COMPILE_ERR_PATC.search(output):
         # Compilation errors
-        print error('Compilation error!') 
+        print error('Compilation errors:')
+        for line in get_compilation_errors(output):
+            print line
     else:
         # Test errors: search for the reports
         if clazz.endswith('Impl'):
@@ -134,4 +139,21 @@ def report_errors(clazz, output):
         lines = lines[:24]
         for line in lines:
             print line,
+
+def get_compilation_errors(output):
+    """
+    Extract the compilation errors from maven's output
+    """
+    errors = []
+    in_section = False
+
+    for line in output.splitlines():
+        if in_section:
+            errors.append(line)
+        if COMPILE_ERR_PATC.search(line):
+            in_section = True
+        elif TOTAL_COMPILE_ERR_PATC.search(line):
+            break
+
+    return errors[1:]
 
