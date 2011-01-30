@@ -4,10 +4,18 @@ Generator for running unit tests with Apache Maven
 """
 
 import os
+import re
 import subprocess
 import time
 
 from autotest.ansi import highlight, error
+
+STATS_PAT = r"""[\w ]+\:\s(\d+),\s   # total
+        \w+\:\s(\d+),\s              # failures
+        \w+\:\s(\d+),\s              # errors
+        \w+\:\s(\d+),\s              # skipped
+        [\w ]+\:\s([0-9.]+) \w+      # elapsed time"""
+STATS_PATC = re.compile(STATS_PAT, re.VERBOSE)
 
 def gen_mvntest(fileseq, root_dir):
     """
@@ -75,9 +83,26 @@ def run_command(command, root_dir):
         print error(stderr_value)
         stdout_value = stderr_value
     else:
-        print highlight('----------------------------')
-        print highlight('Finished tests in %f seconds\n' % (end_time -
-            start_time))
+        print highlight('------------------------------')
+        print highlight('Finished tests in %.2f seconds\n' % (end_time - start_time))
 
     return (proc.returncode, stdout_value)
+
+def report_totals(output):
+    """
+    Report the number of tests run, errors, etc.
+    """
+    groups = (STATS_PATC.match(line) for line in output.splitlines())
+    tuples = (g.groups() for g in groups if g)
+
+    results = [0,0,0,0,0]
+    for t in tuples:
+        results[0] += int(t[0])     # total
+        results[1] += int(t[1])     # failures
+        results[2] += int(t[2])     # errors
+        results[3] += int(t[3])     # skipped
+        results[4] += float(t[4])   # elapsed time
+
+    print 'Tests run: %d, Failures: %d, Errors: %d, Skipped: %d, '\
+            'Time elapsed: %f' % tuple(results)
 
