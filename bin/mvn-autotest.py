@@ -7,14 +7,14 @@ if __name__ == '__main__':
     sys.path.append('../')
 
     from autotest.ansi import error
-    from autotest.maven import gen_mvntest, report_totals
+    from autotest.maven import gen_mvntest, report_totals, report_errors
     from autotest.realtime import gen_follow_all
 
     # TODO: use argparse to create a command line interface
     modified_files = gen_follow_all('*.java', sys.argv[1])
     results = gen_mvntest(modified_files, sys.argv[1])
 
-    for exit_code, output in results:
+    for clazz, exit_code, output in results:
         # Stop the program if we're unable to execute the command
         if 0 < exit_code > 1:
             modified_files.close()
@@ -24,4 +24,5 @@ if __name__ == '__main__':
 
             if exit_code == 1:
                 print error('\nErrors in the tests!\n')
+                report_errors(clazz, output)
 

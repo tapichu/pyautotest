@@ -9,13 +9,22 @@ import subprocess
 import time
 
 from autotest.ansi import highlight, error
+from autotest.search import gen_find
 
+# Regexps to process maven's output
 STATS_PAT = r"""[\w ]+\:\s(\d+),\s   # total
         \w+\:\s(\d+),\s              # failures
         \w+\:\s(\d+),\s              # errors
         \w+\:\s(\d+),\s              # skipped
         [\w ]+\:\s([0-9.]+) \w+      # elapsed time"""
 STATS_PATC = re.compile(STATS_PAT, re.VERBOSE)
+
+COMPILE_ERR_PAT = r'^\[ERROR\] COMPILATION ERROR.*$'
+COMPILE_ERR_PATC = re.compile(COMPILE_ERR_PAT, re.MULTILINE)
+
+# TODO: the path could have spaces in it, check this regex
+REPORT_DIR_PAT = r'^\[ERROR\] Please refer to (\S+) for.*'
+REPORT_DIR_PATC = re.compile(REPORT_DIR_PAT)
 
 def gen_mvntest(fileseq, root_dir):
     """
@@ -30,9 +39,9 @@ def gen_mvntest(fileseq, root_dir):
         project, clazz = get_submodule_and_class(f, root_dir)
         command = create_command(project, clazz)
 
-        result = run_command(command, root_dir)
+        exit_code, output = run_command(command, root_dir)
 
-        yield result
+        yield (clazz, exit_code, output)
 
 def get_submodule_and_class(path, root_dir):
     """
@@ -104,5 +113,25 @@ def report_totals(output):
         results[4] += float(t[4])   # elapsed time
 
     print 'Tests run: %d, Failures: %d, Errors: %d, Skipped: %d, '\
-            'Time elapsed: %f' % tuple(results)
+            'Time elapsed: %.2f' % tuple(results)
+
+def report_errors(clazz, output):
+    if COMPILE_ERR_PATC.search(output):
+        # Compilation errors
+        print error('Compilation error!') 
+    else:
+        # Test errors: search for the reports
+        if clazz.endswith('Impl'):
+            clazz = clazz[:-4]
+
+        groups = (REPORT_DIR_PATC.match(line) for line in output.splitlines())
+        dirs = (g.group(1) for g in groups if g)
+
+        reports = gen_find('*' + clazz + '*.txt', dirs.next())
+        lines = [line for line in open(reports.next())]
+        
+        # TODO: let the user choose this limit (or no limit)
+        lines = lines[:24]
+        for line in lines:
+            print line,
 
