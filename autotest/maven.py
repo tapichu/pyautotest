@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Generator for running unit tests with Apache Maven
+Generator for running unit tests with Apache Maven.
 """
 
 import os
@@ -49,7 +49,7 @@ def gen_mvntest(fileseq, root_dir):
 def get_submodule_and_class(path, root_dir):
     """
     Returns a tuple with the name of the class and the
-    name of the project / submodule the class belongs to
+    name of the project / submodule the class belongs to.
     """
     relative_path = path[len(root_dir):]
     parts = relative_path.split(os.sep)
@@ -60,7 +60,7 @@ def get_submodule_and_class(path, root_dir):
 
 def create_command(project, clazz):
     """
-    Builds the maven command to execute the tests
+    Builds the maven command to execute the tests.
     """
     # TODO: This are just some hard-coded conventions.
     #       It would be better to make this "configurable" or even better,
@@ -80,7 +80,7 @@ def create_command(project, clazz):
 
 def run_command(command, root_dir):
     """
-    Runs a command using subprocess
+    Runs a command using subprocess.
     """
     print highlight('\nRunning tests: %s' % command)
 
@@ -118,7 +118,11 @@ def report_totals(output):
     print 'Tests run: %d, Failures: %d, Errors: %d, Skipped: %d, '\
             'Time elapsed: %.2f' % tuple(results)
 
-def report_errors(clazz, output):
+def report_errors(clazz, output, max_lines):
+    """
+    Prints information about errors.
+    The errors can be compilation errors or test failures.
+    """
     if COMPILE_ERR_PATC.search(output):
         # Compilation errors
         print error('Compilation errors:')
@@ -135,14 +139,14 @@ def report_errors(clazz, output):
         reports = gen_find('*' + clazz + '*.txt', dirs.next())
         lines = [line for line in open(reports.next())]
         
-        # TODO: let the user choose this limit (or no limit)
-        lines = lines[:24]
+        if 0 < max_lines < len(lines):
+            lines = lines[:max_lines]
         for line in lines:
             print line,
 
 def get_compilation_errors(output):
     """
-    Extract the compilation errors from maven's output
+    Extract the compilation errors from maven's output.
     """
     errors = []
     in_section = False
