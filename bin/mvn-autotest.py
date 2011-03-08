@@ -11,6 +11,8 @@ def option_parser():
             metavar='PATH')
     parser.add_option('-l', '--lines', type='int', dest='lines', default=24,
             help='limit the number of lines shown for test error reports')
+    parser.add_option('-k', '--kde', action='store_true', dest='kde',
+            help='enable KDE desktop notifications')
     return parser
 
 if __name__ == '__main__':
@@ -20,6 +22,7 @@ if __name__ == '__main__':
     from autotest.ansi import error
     from autotest.maven import gen_mvntest, report_totals, report_errors
     from autotest.realtime import gen_follow_all
+    import autotest.kde
 
     # Parse arguments
     parser = option_parser()
@@ -39,6 +42,13 @@ if __name__ == '__main__':
             report_totals(output)
 
             if exit_code == 1:
+                if options.kde:
+                    autotest.kde.passive_popup('Errors in the tests!', 10,
+                            'pyAutotest - %s' % clazz)
                 print error('\nErrors in the tests!\n')
                 report_errors(clazz, output, options.lines)
+            else:
+                if options.kde:
+                    autotest.kde.passive_popup('Test execution successful!', 10,
+                            'pyAutotest - %s' % clazz)
 
