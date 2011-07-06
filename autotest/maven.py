@@ -26,7 +26,7 @@ TOTAL_COMPILE_ERR_PAT = r'^\[INFO] \d+ error'
 TOTAL_COMPILE_ERR_PATC = re.compile(TOTAL_COMPILE_ERR_PAT)
 
 # TODO: the path could have spaces in it, check this regex
-REPORT_DIR_PAT = r'^\[ERROR\] Please refer to (\S+) for.*'
+REPORT_DIR_PAT = r'^\[ERROR\] Please refer to (.+) for the individual.*'
 REPORT_DIR_PATC = re.compile(REPORT_DIR_PAT)
 
 def gen_mvntest(fileseq, root_dir):
@@ -134,7 +134,7 @@ def report_errors(clazz, output, max_lines):
             clazz = clazz[:-4]
 
         groups = (REPORT_DIR_PATC.match(line) for line in output.splitlines())
-        dirs = (g.group(1) for g in groups if g)
+        dirs = (clean_path(g.group(1)) for g in groups if g)
 
         reports = gen_find('*' + clazz + '*.txt', dirs.next())
         lines = [line for line in open(reports.next())]
@@ -161,3 +161,7 @@ def get_compilation_errors(output):
 
     return errors[1:]
 
+def clean_path(path):
+    if os.name == 'nt':
+        path = path.replace('\\', '/')
+    return path
