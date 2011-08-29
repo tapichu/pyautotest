@@ -68,7 +68,7 @@ def create_command(project, clazz):
     if clazz.endswith('Test'):
         cmd = 'mvn -pl %s -am test -Dtest=%s' % (project, clazz)
     elif clazz.endswith('IT'):  # failsafe-maven-plugin for integration tests
-        cmd = 'mvn -pl %s -am verify -Dit.test=%s' % (project, clazz)
+        cmd = 'mvn -pl %s -am verify -DskipTests -Dit.test=%s' % (project, clazz)
     else:
         if clazz.endswith('Impl'):
             clazz = clazz[:-4] + '*'
